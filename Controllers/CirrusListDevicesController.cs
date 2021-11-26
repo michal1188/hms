@@ -42,19 +42,22 @@ namespace HMS.Controllers
 
                         pageNumber = (json.pageNumber != null) ? json.pageNumber : 1;
                         rowsPerPage = (json.rowsPerPage != null) ? json.rowsPerPage : 10;
-                        sortBy = (json.sortBy != null) ? json.sortBy : "device_id";
+                        sortBy = (json.sortBy != null) ? json.sortBy : "sub.device_id";
                         sortDesc = (json.sortDesc != null) ? json.sortDesc : false;
 
-
                         string searchFromJson = json.search;
-
                         int offset = pageNumber * rowsPerPage - rowsPerPage;
                         string searchLike = "%" + searchFromJson + "%";
+                       
+                        searchLike = searchLike.Replace(";", "");
+                        
+                        int totalPpe = this.FetchNumberOfDevices(searchLike);
+                        IEnumerable<Object> sortedDevices = SelectMaxMeter_ts(this.FetchSortedDevicesList(searchLike, sortBy, sortDesc, rowsPerPage, offset));
 
 
-            string meter_nr = "001135";
-            IEnumerable<Object> test = this.SelectMaxMeter_ts(meter_nr);
-            object returnedList = new { test = test };
+            //string meter_nr = "001135";
+           // IEnumerable<Object> test = this.SelectMaxMeter_ts(meter_nr);
+            object returnedList = new { sortedDevices = sortedDevices, totalPpe= totalPpe };
 
             
             return Ok(returnedList);
@@ -63,75 +66,111 @@ namespace HMS.Controllers
  
 
 
-        private int FetchNumberOfPpe(string searchLike)
+        private int FetchNumberOfDevices(string searchLike)
         {
-            int totalPpe = Convert.ToInt32(this.db.Query("public.locations")
-                .Where(q =>
-                    q.WhereLike("locations.name", @searchLike)
-                    .OrWhereRaw(" CAST(locations.id AS TEXT) LIKE ?", @searchLike)
-                    .OrWhereLike("locations.device_serial", @searchLike)
-                    .OrWhereLike("locations.custom_label", @searchLike)
-                )
-                .AsCount().First().count);
+            SqlKata.Query queryCount = this.db.Query()
+                .From(subQuery => subQuery.Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
+                        .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
+                        .SelectRaw("null AS last_measure")
+                        .From("iot.device")
+                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
+                        .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
+                        .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
+                        .GroupBy("device.device_id")
+                        .GroupBy("measure_setup.meter_id")
+                        .WhereRaw("device.device_model LIKE 'Stratus%' ")
+                        
+                        .As("sub")).Where(q =>
+                                    q.WhereLike("sub.device_id", @searchLike)
+                                     .OrWhereLike("sub.device_model", @searchLike)
+                                     .OrWhereLike("sub.meter_id", @searchLike)
+                                     .OrWhereRaw(" CAST(sub.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
+                                     .OrWhereRaw(" CAST(sub.update_ts AS TEXT) LIKE ?", @searchLike)
+                                     .OrWhereLike("sub.device_version", @searchLike)
+                                     .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
+                                )
 
+                .AsCount();
+                        
+            //Console.WriteLine(db.Compiler.Compile(zapytanie).Sql);
+            int totalPpe = Convert.ToInt32(queryCount.First().count);
+            
             return totalPpe;
         }
-
-        private IEnumerable<Object> FetchSortedPpeList(string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
+        
+        private IEnumerable<Object> FetchSortedDevicesList(string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
         {
-            SqlKata.Query sortedPpeQuery = this.db.Query("iot.device")
-              .Select("device.id","", "device.device_model", "device.gsm_state", "device.gsm_signal_power","device.update_ts", "device.device_version")
-              .SelectRaw("null AS last_measure")
-              .Join("iot.device_port","device.device_id","device_port.device_id")
-              .Join("iot.measure_device_setup","device_port.device_port_id", "measure_device_setup.device_port_id")
-              .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-              //tutaj join z measureelctricity ostatni pomiar
-              .WhereRaw("device.device_model LIKE 'Stratus%'")
-              .GroupBy("device.device_id")
-              .GroupBy("measure_setup.meter_id")
-
+            SqlKata.Query sortedDevicesQuery = this.db.Query().
+                From(subQuery => subQuery
+                    .From("iot.device")
+                    .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
+                    .SelectRaw("device.update_ts at time zone 'Europe/Warsaw' AS update_ts")
+                    .SelectRaw("null AS last_measure")
+                    .Join("iot.device_port", "device.device_id", "device_port.device_id")
+                    .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
+                    .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
+                    .GroupBy("device.device_id")
+                    .GroupBy("measure_setup.meter_id")
+                    .WhereRaw("device.device_model LIKE 'Stratus%' ")
+                    .As("sub"))
+                        .Where(q =>           
+                                      q.WhereLike("sub.device_id", @searchLike)
+                                     .OrWhereLike("sub.device_model", @searchLike)
+                                     .OrWhereLike("sub.meter_id", @searchLike)
+                                     .OrWhereRaw(" CAST(sub.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
+                                     .OrWhereRaw(" CAST(sub.update_ts AS TEXT) LIKE ?", @searchLike)
+                                     .OrWhereLike("sub.device_version", @searchLike)
+                                     .OrWhereRaw(" CAST( sub.last_measure AS TEXT) LIKE ?", @searchLike)
+                                )
+            
               .Limit(rowsPerPage)
-              .Offset(offset);
+              .Offset(offset); ;
 
-            if (sortDesc == false) { sortedPpeQuery.OrderBy(sortBy); }
-            else { sortedPpeQuery.OrderByDesc(sortBy); }
+           if (sortDesc == false) { sortedDevicesQuery.OrderBy(sortBy); }
+           else { sortedDevicesQuery.OrderByDesc(sortBy); }
 
 
             //Console.WriteLine(db.Compiler.Compile(sortedPpeQuery).Sql);
 
-            IEnumerable<Object> sortedPpe = new List<object>();
+            IEnumerable<Object> sortedDevices = new List<object>();
+
             try
             {
-                sortedPpe = sortedPpeQuery.Get();
+                sortedDevices = sortedDevicesQuery.Get();
             }
             catch (Exception e)
             {
                 log.Error(e);
             }
 
-            return sortedPpe;
+            
+            return sortedDevices;
         }
-        private IEnumerable<Object> SelectMaxMeter_ts(string meterName)
-        {
-            SqlKata.Query selectMaxMeter_tsQuery = this.db.Query("iot.measurement_electricity")
-               //.Select("meter_nr")
-               .SelectRaw("max(meter_ts)")
-               //.GroupBy("meter_nr")
-               .WhereRaw("meter_nr='" + meterName + "'");
-               //.OrderByDesc("meter_ts")
-               //.Limit(1);
-               
-               
-
-            IEnumerable<Object> xx = new List<Object>(); try
-            {
-                xx = selectMaxMeter_tsQuery.Get();
-            }
-            catch (Exception e) { log.Error(e); }
 
 
-            return selectMaxMeter_tsQuery.Get();
-        }
+  private IEnumerable<Object> SelectMaxMeter_ts(IEnumerable<Object> sortedDevices)
+         {
+            SqlKata.Query selectedMaxMeter_ts;
+           // List<object> selectedMaxMeter_tsList = new List<object>();
+
+
+            foreach (IDictionary<string, object> row in sortedDevices)
+             {
+                selectedMaxMeter_ts=this.db.Query("iot.measurement_electricity")
+              //.Select("meter_nr")
+                .SelectRaw("max(meter_ts at time zone 'Europe/Warsaw')")
+              //.GroupBy("meter_nr")
+                .WhereRaw("meter_nr='" + row["meter_id"] + "'");
+                //.OrderByDesc("meter_ts")
+                //.Limit(1);
+            
+               IDictionary<string,object> max = selectedMaxMeter_ts.First();
+                row["last_measure"] = ((DateTime)max["max"]);
+            };
+                        
+            return sortedDevices;
+         }
+  
 
 
     }

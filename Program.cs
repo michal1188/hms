@@ -13,7 +13,7 @@ namespace HMS
     {
         public static void Main(string[] args)
         {
-            TimeZoneInfo tzi=TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+           
             CreateHostBuilder(args).Build().Run();
         }
 
