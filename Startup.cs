@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+using SqlKata.Compilers;
+using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +18,10 @@ namespace HMS
 {
     public class Startup
     {
+        string connectionString = System.IO.File.ReadAllText(@"DatabaseConnectionString.txt");
         public Startup(IConfiguration configuration)
         {
+
             Configuration = configuration;
         }
 
@@ -25,6 +30,16 @@ namespace HMS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped(factory =>
+            {
+
+                return new QueryFactory
+                {
+                    Connection = new NpgsqlConnection(connectionString.Trim()),
+                    Compiler = new PostgresCompiler()
+                };
+
+            });
             services.AddControllers();
         }
 
@@ -37,6 +52,9 @@ namespace HMS
             }
 
             app.UseHttpsRedirection();
+            app.UseCors(builder => builder.WithOrigins("*")
+                .AllowAnyMethod()
+                .AllowAnyHeader());
 
             app.UseRouting();
 
