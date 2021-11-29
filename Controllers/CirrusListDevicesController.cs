@@ -42,7 +42,7 @@ namespace HMS.Controllers
 
                         pageNumber = (json.pageNumber != null) ? json.pageNumber : 1;
                         rowsPerPage = (json.rowsPerPage != null) ? json.rowsPerPage : 10;
-                        sortBy = (json.sortBy != null) ? json.sortBy : "sub.device_id";
+                        sortBy = (json.sortBy != null) ? json.sortBy : "device_id";
                         sortDesc = (json.sortDesc != null) ? json.sortDesc : false;
 
                         string searchFromJson = json.search;
@@ -85,6 +85,7 @@ namespace HMS.Controllers
                                      .OrWhereLike("sub.device_model", @searchLike)
                                      .OrWhereLike("sub.meter_id", @searchLike)
                                      .OrWhereRaw(" CAST(sub.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
+                                      .OrWhereRaw(" CAST(sub.gsm_state AS TEXT) LIKE ?", @searchLike)
                                      .OrWhereRaw(" CAST(sub.update_ts AS TEXT) LIKE ?", @searchLike)
                                      .OrWhereLike("sub.device_version", @searchLike)
                                      .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
@@ -118,6 +119,7 @@ namespace HMS.Controllers
                                      .OrWhereLike("sub.device_model", @searchLike)
                                      .OrWhereLike("sub.meter_id", @searchLike)
                                      .OrWhereRaw(" CAST(sub.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
+                                     .OrWhereRaw(" CAST(sub.gsm_state AS TEXT) LIKE ?", @searchLike)
                                      .OrWhereRaw(" CAST(sub.update_ts AS TEXT) LIKE ?", @searchLike)
                                      .OrWhereLike("sub.device_version", @searchLike)
                                      .OrWhereRaw(" CAST( sub.last_measure AS TEXT) LIKE ?", @searchLike)
@@ -151,8 +153,7 @@ namespace HMS.Controllers
   private IEnumerable<Object> SelectMaxMeter_ts(IEnumerable<Object> sortedDevices)
          {
             SqlKata.Query selectedMaxMeter_ts;
-           // List<object> selectedMaxMeter_tsList = new List<object>();
-
+           
 
             foreach (IDictionary<string, object> row in sortedDevices)
              {
@@ -165,7 +166,12 @@ namespace HMS.Controllers
                 //.Limit(1);
             
                IDictionary<string,object> max = selectedMaxMeter_ts.First();
-                row["last_measure"] = ((DateTime)max["max"]);
+
+
+                if (row["last_measure"] is null) {
+                    row["last_measure"] ="Brak odczytu";
+                    continue; }
+                row["last_measure"] = (max["max"]);
             };
                         
             return sortedDevices;
