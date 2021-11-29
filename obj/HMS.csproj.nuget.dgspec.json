@@ -47,6 +47,18 @@
             "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": {
               "target": "Package",
               "version": "[1.11.1, )"
+            },
+            "Npgsql": {
+              "target": "Package",
+              "version": "[6.0.0, )"
+            },
+            "SqlKata": {
+              "target": "Package",
+              "version": "[2.3.7, )"
+            },
+            "SqlKata.Execution": {
+              "target": "Package",
+              "version": "[2.3.7, )"
             }
           },
           "imports": [
