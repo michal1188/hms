@@ -32,7 +32,6 @@ namespace HMS.Controllers
             int  rowsPerPage = (json.rowsPerPage != null) ? json.rowsPerPage : 10;
             string sortBy = (json.sortBy != null) ? json.sortBy : "name";
             bool  sortDesc = (json.sortDesc != null) ? json.sortDesc : false;
-
             string searchFromJson = json.search;
             int offset = pageNumber * rowsPerPage - rowsPerPage;
             string searchLike = "%" + searchFromJson + "%";
@@ -41,7 +40,8 @@ namespace HMS.Controllers
 
             int totalClient = this.FetchNumberOfClients(searchLike);
 
-            IEnumerable<Object> sortedClients = CheckNullValue( this.FetchSortedClientsList(searchLike, sortBy, sortDesc, rowsPerPage, offset));
+            // IEnumerable<Object> sortedClients = CheckNullValue( this.FetchSortedClientsList(searchLike, sortBy, sortDesc, rowsPerPage, offset));
+            IEnumerable<Object> sortedClients = this.FetchSortedClientsList(searchLike, sortBy, sortDesc, rowsPerPage, offset);
             object returnedList = new { sortedClients = sortedClients, totalClient = totalClient };
             return Ok(returnedList);
         }
@@ -49,24 +49,23 @@ namespace HMS.Controllers
 
         private int FetchNumberOfClients(string searchLike)
         {
-            SqlKata.Query queryCount = this.db.Query().From(
-               subQuery => subQuery.From("common.client")
-                .Select("name")
-                .SelectRaw(@"info#>>'\{company,address\}'AS Adres")
-                .SelectRaw(@"info#>>'\{company,city\}'AS Miasto")
-                .SelectRaw(@"info#>>'\{company,nip\}'AS NIP")
-                .SelectRaw(@"info#>>'\{contact,phone\}'AS Telefosn")
-                .SelectRaw(@"info#>>'\{contact,email\}'AS Email")
-                .SelectRaw(@"info#>>'\{contact,contact_name\}'AS Kontakt")
-                .WhereRaw(@"common.client.info#>'\{company,address\} like '" + @searchLike+"'")
-                 .As("sub")).Where(q =>
-                            q.WhereLike("adres", @searchLike)
-                             .OrWhereLike("miasto", @searchLike)
-                             .OrWhereLike("nip", @searchLike)
-                             .OrWhereLike("email", @searchLike)
-                             .OrWhereLike("kontakt", @searchLike)
-                             .OrWhereLike("name", @searchLike)
-                                ).AsCount();
+            SqlKata.Query queryCount = this.db.Query("common.client")
+                .SelectRaw("coalesce(name,'Brak danych') AS name")
+                .SelectRaw("coalesce(" + @"info#>>'\{company,address\}', 'Brak danych') AS address")
+                .SelectRaw("coalesce(" + @"info#>>'\{company,city\}', 'Brak danych') AS city")
+                .SelectRaw("coalesce(" + @"info#>>'\{company,nip\}', 'Brak danych') AS nip")
+                .SelectRaw("coalesce(" + @"info#>>'\{contact,phone\}', 'Brak danych')AS phone")
+                .SelectRaw("coalesce(" + @"info#>>'\{contact,email\}', 'Brak danych')AS email")
+                .SelectRaw("coalesce(" + @"info#>>'\{contact,contact_name\}', 'Brak danych') AS contact")
+
+                .WhereRaw("lower(" + @"info#>>'\{company,address\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower(" + @"info#>>'\{company,city\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower(" + @"info#>>'\{company,nip\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower("+@"info#>>'\{contact,email\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower("+ @"info#>>'\{contact,phone\}') like '" + @searchLike+"'")
+                .OrWhereRaw("lower(" + @"info#>>'\{contact,contact_name\}') like '" + @searchLike + "'")
+                .OrWhereLike("name", @searchLike )
+                    .AsCount();
 
             Console.WriteLine(db.Compiler.Compile(queryCount).Sql);
             int totalClient = Convert.ToInt32(queryCount.First().count);
@@ -76,26 +75,24 @@ namespace HMS.Controllers
 
         private IEnumerable<Object> FetchSortedClientsList(string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
         {
-            SqlKata.Query sortedClientsQuery = this.db.Query().From(
-               subQuery => subQuery.From("common.client")
-                .Select("name")
-                .SelectRaw(@"info#>>'\{company,address\}'AS Adres")
-                .SelectRaw(@"info#>>'\{company,city\}'AS Miasto")
-                .SelectRaw(@"info#>>'\{company,nip\}'AS NIP")
-                .SelectRaw(@"info#>>'\{contact,phone\}'AS Telefon")
-                .SelectRaw(@"info#>>'\{contact,email\}'AS Email")
-                .SelectRaw(@"info#>>'\{contact,contact_name\}'AS Kontakt")
-                .As("sub"))
-                .Where(q =>
-                            q.WhereLike("adres", @searchLike)
-                             .OrWhereLike("miasto", @searchLike)
-                             .OrWhereLike("nip", @searchLike)
-                             .OrWhereLike("email", @searchLike)
-                             .OrWhereLike("kontakt", @searchLike)
-                             .OrWhereLike("name", @searchLike)
-                                )
-               .Limit(rowsPerPage)
-              .Offset(offset); 
+            SqlKata.Query sortedClientsQuery = this.db.Query("common.client")
+                .SelectRaw("coalesce(name,'Brak danych') AS name")
+                .SelectRaw("coalesce("+@"info#>>'\{company,address\}', 'Brak danych') AS address")
+                .SelectRaw("coalesce(" + @"info#>>'\{company,city\}', 'Brak danych') AS city")
+                .SelectRaw("coalesce(" + @"info#>>'\{company,nip\}', 'Brak danych') AS nip")
+                .SelectRaw("coalesce(" + @"info#>>'\{contact,phone\}', 'Brak danych')AS phone")
+                .SelectRaw("coalesce(" + @"info#>>'\{contact,email\}', 'Brak danych')AS email")
+                .SelectRaw("coalesce(" + @"info#>>'\{contact,contact_name\}', 'Brak danych') AS contact")
+
+                .WhereRaw("lower(" + @"info#>>'\{company,address\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower(" + @"info#>>'\{company,city\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower(" + @"info#>>'\{company,nip\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower(" + @"info#>>'\{contact,email\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower(" + @"info#>>'\{contact,phone\}') like '" + @searchLike + "'")
+                .OrWhereRaw("lower(" + @"info#>>'\{contact,contact_name\}') like '" + @searchLike + "'")
+                .OrWhereLike("name", @searchLike)
+                .Limit(rowsPerPage)
+                .Offset(offset); 
 
             if (sortDesc == false) { sortedClientsQuery.OrderBy(sortBy); }
             else { sortedClientsQuery.OrderByDesc(sortBy); };
@@ -115,11 +112,11 @@ namespace HMS.Controllers
 
             return sortedClients;
         }
-
+        /*
         //przenies do zapytania sql -> coalesce
         private IEnumerable<Object> CheckNullValue(IEnumerable<Object> sortedDevices)
         {
-            string[] clientData = { "name", "miasto", "adres", "nip", "telefon", "email", "kontakt" };
+            string[] clientData = { "name", "city", "address", "nip", "phone", "email", "contact" };
 
             foreach (IDictionary<string, object> row in sortedDevices)
             {
@@ -134,7 +131,7 @@ namespace HMS.Controllers
 
             return sortedDevices;
         }
-
+        */
 
     }
 }

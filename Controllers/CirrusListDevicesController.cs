@@ -176,46 +176,47 @@ namespace HMS.Controllers
             return sortedDevices;
         }
 
-
         private IEnumerable<Object> SelectMaxMeter_ts(IEnumerable<Object> sortedDevices)
         {
             SqlKata.Query selectedMaxMeter_ts;
+
+            // sprobuj zrobić z where in
             foreach (IDictionary<string, object> row in sortedDevices)
             {
                 //Console.WriteLine("obrot");
                 // Console.WriteLine(DateTime.Now);
                 selectedMaxMeter_ts = this.queryFactory.Query("iot.measurement_electricity")
-                //  .Select("meter_ts")
-                .SelectRaw("max(meter_ts at time zone 'Europe/Warsaw')")
-                .GroupBy("meter_nr")
-                .Where("meter_nr='" + row["meter_id"] + "'");
-               //.OrderByDesc("meter_ts")
-               // .Limit(1);
+                .Select("meter_nr")
+                //.SelectRaw("max(meter_ts at time zone 'Europe/Warsaw')")
+                //.GroupBy("meter_nr")
+                .WhereRaw("meter_nr='" + row["meter_id"] + "'")
+                .OrderByDesc("meter_ts")
+                .Limit(1);
 
-
-                string max ="BRAK ODCZYTU";
-                try { max = selectedMaxMeter_ts.First().meter_ts.ToString(); } 
-                catch (Exception e) {
-                    log.Error(e);
-                //    Console.WriteLine(e);
-                }
-
-                /*
-
-                if (row["last_measure"] is null)
+               try
+                {
+                    string max = selectedMaxMeter_ts.First().ToString();
+                                if (row["last_measure"] is null)
                 {
                     row["last_measure"] = "Brak odczytu";
                     continue;
-                }*/
+                    }
+                row["last_measure"] =max;
 
-                row["last_measure"] = max;
-               //Console.WriteLine(DateTime.Now);
-            };
+            }
+                catch (Exception e)
+            {
+                log.Error(e);
+                //    Console.WriteLine(e);
+            }
+        };
 
             return sortedDevices;
         }
 
 
 
+    
+    
     }
 }

@@ -5,6 +5,11 @@
       "ProjectGuid": "7ac50745-a97b-4163-b9c7-e50134d5ea35",
       "DisplayName": "HMS",
       "ColorIndex": 0
+    },
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Różne pliki",
+      "ColorIndex": -1
     }
   },
   "NextColorIndex": 1
