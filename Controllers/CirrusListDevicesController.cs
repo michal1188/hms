@@ -54,7 +54,7 @@ namespace HMS.Controllers
 
 
         private int FetchNumberOfDevices(string searchLike)
-        {   
+        {    /*
             SqlKata.Query queryCount = this.queryFactory.Query()
                 .From(subQuery => subQuery.Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
                         .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
@@ -79,8 +79,8 @@ namespace HMS.Controllers
                                 )
 
                 .AsCount();
-            /*
-                   SqlKata.Query queryCount = this.queryFactory.Query("iot.device")
+            */
+            SqlKata.Query queryCount = this.queryFactory.Query("iot.device")
                         .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
                                 .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
                                 .SelectRaw("null AS last_measure")
@@ -99,7 +99,7 @@ namespace HMS.Controllers
                                              .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
                                              .OrWhereLike("device.device_version", @searchLike)
                                              //.OrWhereRaw(" CAST(last_measure AS TEXT) LIKE ?", @searchLike)
-                                        ).AsCount();     */
+                                        ).AsCount();    
             //Console.WriteLine(db.Compiler.Compile(zapytanie).Sql);
             int totalPpe = Convert.ToInt32(queryCount.First().count);
 
@@ -180,19 +180,17 @@ namespace HMS.Controllers
         private IEnumerable<Object> SelectMaxMeter_ts(IEnumerable<Object> sortedDevices)
         {
             SqlKata.Query selectedMaxMeter_ts;
-
-
             foreach (IDictionary<string, object> row in sortedDevices)
             {
                 //Console.WriteLine("obrot");
-               // Console.WriteLine(DateTime.Now);
+                // Console.WriteLine(DateTime.Now);
                 selectedMaxMeter_ts = this.queryFactory.Query("iot.measurement_electricity")
-                .Select("meter_ts")
-                //.SelectRaw("max(meter_ts at time zone 'Europe/Warsaw')")
-                // .GroupBy("meter_nr")
-                .Where("meter_nr='" + row["meter_id"] + "'")
-                .OrderByDesc("meter_ts")
-                .Limit(1);
+                //  .Select("meter_ts")
+                .SelectRaw("max(meter_ts at time zone 'Europe/Warsaw')")
+                .GroupBy("meter_nr")
+                .Where("meter_nr='" + row["meter_id"] + "'");
+               //.OrderByDesc("meter_ts")
+               // .Limit(1);
 
 
                 string max ="BRAK ODCZYTU";

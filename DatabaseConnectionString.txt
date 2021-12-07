@@ -1,1 +1,1 @@
-﻿Host=10.0.0.73;port=5557;Username=postgres;Password=P@ssw0rd;Database=postgres;Pooling=true
+﻿Host=10.0.0.73;port=5557;Username=postgres;Password=P@ssw0rd;Database=test;Pooling=true
