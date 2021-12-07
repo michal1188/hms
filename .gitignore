@@ -9,6 +9,9 @@ start.sh
 *.suo
 *.user
 *.userosscache
+*.dll
+*.pdb
+*.cache
 *.sln.docstates
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
