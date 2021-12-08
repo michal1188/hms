@@ -19,7 +19,7 @@ namespace HMS.Controllers
         private readonly ILog log = LogManager.GetLogger("mylog");
         public CirrusListDevicesController(QueryFactory queryFactory)
         {
-            this.queryFactory = queryFactory;
+            this.queryFactory = queryFactory; 
 
         }
 
@@ -54,7 +54,7 @@ namespace HMS.Controllers
 
 
         private int FetchNumberOfDevices(string searchLike)
-        {    /*
+        { 
             SqlKata.Query queryCount = this.queryFactory.Query()
                 .From(subQuery => subQuery.Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
                         .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
@@ -75,14 +75,15 @@ namespace HMS.Controllers
                                       .OrWhereRaw(" CAST(sub.gsm_state AS TEXT) LIKE ?", @searchLike)
                                      .OrWhereRaw(" CAST(sub.update_ts AS TEXT) LIKE ?", @searchLike)
                                      .OrWhereLike("sub.device_version", @searchLike)
-                                     .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
+                                    // .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
                                 )
 
-                .AsCount();
-            */
+                .AsCount();    /*
             SqlKata.Query queryCount = this.queryFactory.Query("iot.device")
-                        .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
-                                .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
+                      
+                        .Distinct("dsudeevice.device_id")
+                        .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")                               
+                        .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
                                 .SelectRaw("null AS last_measure")
                                 .Join("iot.device_port", "device.device_id", "device_port.device_id")
                                 .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
@@ -90,6 +91,7 @@ namespace HMS.Controllers
                                 .GroupBy("device.device_id")
                                 .GroupBy("measure_setup.meter_id")
                                .WhereRaw("device.device_model LIKE 'Stratus%' ")
+
                                 .Where(q =>
                                             q.WhereLike("device.device_id", @searchLike)
                                              .OrWhereLike("device.device_model", @searchLike)
@@ -99,8 +101,11 @@ namespace HMS.Controllers
                                              .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
                                              .OrWhereLike("device.device_version", @searchLike)
                                              //.OrWhereRaw(" CAST(last_measure AS TEXT) LIKE ?", @searchLike)
-                                        ).AsCount();    
-            //Console.WriteLine(db.Compiler.Compile(zapytanie).Sql);
+                                        )
+                              
+                                .AsCount();   */
+
+            Console.WriteLine(queryFactory.Compiler.Compile(queryCount).Sql);
             int totalPpe = Convert.ToInt32(queryCount.First().count);
 
             return totalPpe;
@@ -108,7 +113,7 @@ namespace HMS.Controllers
 
         private IEnumerable<Object> FetchSortedDevicesList(string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
         {
-            /*  SqlKata.Query sortedDevicesQuery = this.queryFactory.Query().
+            SqlKata.Query sortedDevicesQuery = this.queryFactory.Query().
                   From(subQuery => subQuery
                       .From("iot.device")
                       .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
@@ -129,37 +134,40 @@ namespace HMS.Controllers
                                        .OrWhereRaw(" CAST(sub.gsm_state AS TEXT) LIKE ?", @searchLike)
                                        .OrWhereRaw(" CAST(sub.update_ts AS TEXT) LIKE ?", @searchLike)
                                        .OrWhereLike("sub.device_version", @searchLike)
-                                       .OrWhereRaw(" CAST( sub.last_measure AS TEXT) LIKE ?", @searchLike)
+                                      // .OrWhereRaw(" CAST( sub.last_measure AS TEXT) LIKE ?", @searchLike)
                                   )
 
                 .Limit(rowsPerPage)
-                .Offset(offset); 
-            */
+                .Offset(offset);
+            /*
+            //nie działa  grupowanie przy zapytaniu bez sub zapytania  /* 
+         SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")            
+                 .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
+                 .SelectRaw("device.update_ts at time zone 'Europe/Warsaw' AS update_ts")
+                 .SelectRaw("null AS last_measure")
+                 .Join("iot.device_port", "device.device_id", "device_port.device_id")
+                 .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
+                 .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
+                 .GroupBy("device.device_id")
+                 .GroupBy("measure_setup.meter_id")
+                 .WhereRaw("device.device_model LIKE 'Stratus%' ")
+                     .Where(q =>
+                                   q.WhereLike("device.device_id", @searchLike)
+                                  .OrWhereLike("device.device_model", @searchLike)
+                                  .OrWhereLike("measure_setup.meter_id", @searchLike)
+                                  .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
+                                  .OrWhereRaw(" CAST(device.gsm_state AS TEXT) LIKE ?", @searchLike)
+                                  .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
+                                  .OrWhereLike("device.device_version", @searchLike)
+                                  //Czy na pewno ma nie wyszukiwac po ostatnim pomiarze? 
+                                  //.OrWhereRaw(" CAST( sub.last_measure AS TEXT) LIKE ?", @searchLike)
+                             )
 
-            SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")            
-                    .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_state", "device.gsm_signal_power", "device.device_version")
-                    .SelectRaw("device.update_ts at time zone 'Europe/Warsaw' AS update_ts")
-                    .SelectRaw("null AS last_measure")
-                    .Join("iot.device_port", "device.device_id", "device_port.device_id")
-                    .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
-                    .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-                    .GroupBy("device.device_id")
-                    .GroupBy("measure_setup.meter_id")
-                    .WhereRaw("device.device_model LIKE 'Stratus%' ")
-                        .Where(q =>
-                                      q.WhereLike("device.device_id", @searchLike)
-                                     .OrWhereLike("device.device_model", @searchLike)
-                                     .OrWhereLike("measure_setup.meter_id", @searchLike)
-                                     .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
-                                     .OrWhereRaw(" CAST(device.gsm_state AS TEXT) LIKE ?", @searchLike)
-                                     .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
-                                     .OrWhereLike("device.device_version", @searchLike)
-                                     //Czy na pewno ma nie wyszukiwac po ostatnim pomiarze? 
-                                     //.OrWhereRaw(" CAST( sub.last_measure AS TEXT) LIKE ?", @searchLike)
-                                )
+           .Limit(rowsPerPage)
+           .Offset(offset); */
 
-              .Limit(rowsPerPage)
-              .Offset(offset);
+
+
             if (sortDesc == false) { sortedDevicesQuery.OrderBy(sortBy); }
             else { sortedDevicesQuery.OrderByDesc(sortBy); }
             //Console.WriteLine(db.Compiler.Compile(sortedPpeQuery).Sql);
@@ -183,8 +191,8 @@ namespace HMS.Controllers
             // sprobuj zrobić z where in
             foreach (IDictionary<string, object> row in sortedDevices)
             {
-                //Console.WriteLine("obrot");
-                // Console.WriteLine(DateTime.Now);
+                Console.WriteLine("obrot");
+                Console.WriteLine(DateTime.Now);
                 selectedMaxMeter_ts = this.queryFactory.Query("iot.measurement_electricity")
                 .Select("meter_nr")
                 //.SelectRaw("max(meter_ts at time zone 'Europe/Warsaw')")
@@ -193,10 +201,14 @@ namespace HMS.Controllers
                 .OrderByDesc("meter_ts")
                 .Limit(1);
 
-               try
+                string max = selectedMaxMeter_ts.First();
+                Console.WriteLine(max);
+                try
                 {
-                    string max = selectedMaxMeter_ts.First().ToString();
-                                if (row["last_measure"] is null)
+                   // string max = selectedMaxMeter_ts.First().ToString();
+                    Console.WriteLine(max);
+
+                    if (row["last_measure"] is null)
                 {
                     row["last_measure"] = "Brak odczytu";
                     continue;
