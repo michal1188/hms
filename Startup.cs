@@ -18,7 +18,7 @@ namespace HMS
 {
     public class Startup
     {
-        string connectionString = System.IO.File.ReadAllText(@"DatabaseConnectionString.txt");
+        string connectionString = Security.GetDatabaseCredentials(); 
         public Startup(IConfiguration configuration)
         {
 
@@ -40,7 +40,11 @@ namespace HMS
                 };
 
             });
+            services.AddControllers().AddNewtonsoftJson(options =>
+          options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+      );
             services.AddControllers();
+             
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
