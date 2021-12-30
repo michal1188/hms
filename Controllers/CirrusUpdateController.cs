@@ -24,15 +24,21 @@ namespace HMS.Controllers
             try
             {
                 string result = GetUplodResult(ConnectServer(BinFile));
+                object apacheResponse = new { message = result};
 
-                 return Ok(result);
+                return Ok(apacheResponse);
 
             }
+             
             catch (Exception e)
             {
-           
+
                 log.Error(e);
-                return Ok(e);
+                
+                // Console.WriteLine(e);
+                object apacheError = new { message = e.InnerException.Message };
+
+                return Ok(apacheError);
 
             }
 

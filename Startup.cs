@@ -40,7 +40,7 @@ namespace HMS
                 };
 
             });
-  
+ 
             services.AddControllers();
              
         }

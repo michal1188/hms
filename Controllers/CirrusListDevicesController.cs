@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SqlKata;
 using SqlKata.Execution;
 using System;
@@ -31,6 +32,7 @@ namespace HMS.Controllers
         {
           
             dynamic json = JsonConvert.DeserializeObject(parameters.ToString());
+            
 
             int  pageNumber = (json.pageNumber != null) ? json.pageNumber : 1;
             int rowsPerPage = (json.rowsPerPage != null) ? json.rowsPerPage : 10;
