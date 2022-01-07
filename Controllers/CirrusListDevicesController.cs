@@ -67,7 +67,7 @@ namespace HMS.Controllers
                                    q.WhereLike("device.device_id", @searchLike)
                                     .OrWhereLike("device.device_model", @searchLike)
                                     .OrWhereLike("measure_setup.meter_id", @searchLike)
-                                    .OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
+                                   // .OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.gsm_state AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
@@ -75,7 +75,7 @@ namespace HMS.Controllers
                                // .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
                                );
 
-            Console.WriteLine(queryFactory.Compiler.Compile(queryCount).Sql);
+            //Console.WriteLine(queryFactory.Compiler.Compile(queryCount).Sql);
             IEnumerable<object> totalPpe = queryCount.Get();
 
             return totalPpe.Count();
@@ -84,7 +84,8 @@ namespace HMS.Controllers
         private IEnumerable<Object> FetchSortedDevicesList(string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
         { 
             SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")
-                        .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version,measure_setup.measure_setup_id, measure_setup.meter_id")
+                       //.SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.measure_setup_id, measure_setup.meter_id")
+                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
                        .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
                        .SelectRaw("null AS last_measure")
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
@@ -95,7 +96,7 @@ namespace HMS.Controllers
                                    q.WhereLike("device.device_id", @searchLike)
                                     .OrWhereLike("device.device_model", @searchLike)
                                     .OrWhereLike("measure_setup.meter_id", @searchLike)
-                                    .OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
+                                    //.OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.gsm_state AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)

@@ -4,6 +4,8 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 Security.cs
 start.sh
+Certificates/
+CirrusUpdateFiles/
 # User-specific files
 *.rsuser
 *.suo

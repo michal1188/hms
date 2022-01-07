@@ -38,6 +38,7 @@ namespace HMS.Controllers
                 // Console.WriteLine(e);
                 object apacheError = new { message = e.InnerException.Message };
 
+
                 return Ok(apacheError);
 
             }

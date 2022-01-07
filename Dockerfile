@@ -18,6 +18,11 @@ FROM build AS publish
 RUN dotnet publish "HMS.csproj" -c Release -o /app/publish
 
 FROM base AS final
+WORKDIR /app/Certificates
+COPY Certificates ./
+WORKDIR /app/CirrusUpdateFiles
+COPY CirrusUpdateFiles ./
 WORKDIR /app
+COPY ["Security.cs",""]
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "HMS.dll"]
