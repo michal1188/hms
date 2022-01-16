@@ -1,4 +1,5 @@
-﻿using log4net;
+﻿using HMS.CirrusCommands;
+using log4net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
