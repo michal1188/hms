@@ -32,13 +32,10 @@ namespace HMS.Controllers
              
             catch (Exception e)
             {
-
                 log.Error(e);
-                
-                // Console.WriteLine(e);
+                 // Console.WriteLine(e);
                 object apacheError = new { message = e.InnerException.Message };
-
-
+                
                 return Ok(apacheError);
 
             }

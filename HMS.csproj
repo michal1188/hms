@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <Folder Include="CirrusUpdateFiles\" />
-    <Folder Include="Certificates\" />
   </ItemGroup>
 
 
