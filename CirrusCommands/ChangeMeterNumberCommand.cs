@@ -53,10 +53,11 @@ namespace HMS.CirrusCommands
        public override void setCommandResult(Task<string> HttpClientRequest)
         {
             CheckMeterNumber(meterNumber);
-
+            Console.WriteLine(HttpClientRequest.Result);
             if (regularMeterNumber == true)
             {
                 IList<JToken> resultMessage = JObject.Parse(HttpClientRequest.Result);
+               
                 if (((JProperty)resultMessage[0]).Name == "Message")
                 {
                    // Console.WriteLine(HttpClientRequest.Result.ToString());
@@ -72,9 +73,10 @@ namespace HMS.CirrusCommands
 
                 }
                 else if (((JProperty)resultMessage[0]).Name == "status")
-                {
-                    string messageContent = resultMessage[0].First + 1.ToString();
+                {  
+                    string messageContent = resultMessage[1].First.ToString();
                     JObject jsonMessageContent = JObject.Parse(messageContent);
+ 
                     string response = jsonMessageContent["status"].ToString();
                     setCirrusResponse(getSuccessMeassage(response));
                 }

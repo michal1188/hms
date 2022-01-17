@@ -44,8 +44,11 @@ namespace HMS.CirrusCommands
             successDictionary = new Dictionary<string, string>()
             {
                 {"0", "Nieznany kod błędu, skontatuj się z administratorem"},
-                {"Ok", "Operacja zakończona sukcesem" },
-                { "ERROR", "Błąd więcej informacji w dzienniku zdarzeń urządzenia "}};
+                {"OK", "Operacja zakończona sukcesem" },
+                { "ERROR", "Błąd więcej informacji w dzienniku zdarzeń urządzenia "},
+                //natężenie w amperach/napięcie w wolta
+                { "transformer type","" }
+    };
             }
         public abstract  void setCommandResult(Task<string> HttpClientRequest);
         public async  Task<string> sendCommand(){
@@ -122,7 +125,9 @@ namespace HMS.CirrusCommands
             else { return errorDictionary["0"]; }
 
         }
-
+        public void updateSuccessDictionaryValue(string key, string newValue) {
+            successDictionary[key] = newValue;
+        }
         public string getSuccessMeassage(string key)
         {
             //Console.WriteLine(successDictionary[key]);
