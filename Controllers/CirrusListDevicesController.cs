@@ -62,7 +62,7 @@ namespace HMS.Controllers
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
                        .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
                        .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-                       .WhereRaw("device.device_model LIKE 'Stratus%' ")
+                       .WhereRaw("device.device_model LIKE 'Cirrus%' ")
                        .Where(q =>
                                    q.WhereLike("device.device_id", @searchLike)
                                     .OrWhereLike("device.device_model", @searchLike)
