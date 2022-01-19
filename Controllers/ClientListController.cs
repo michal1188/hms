@@ -37,7 +37,7 @@ namespace HMS.Controllers
             string searchLike = "%" + searchFromJson + "%";
 
             searchLike = searchLike.Replace(";", "");
-
+            searchLike = searchLike.ToLower();
             int totalClient = this.FetchNumberOfClients(searchLike);
 
             // IEnumerable<Object> sortedClients = CheckNullValue( this.FetchSortedClientsList(searchLike, sortBy, sortDesc, rowsPerPage, offset));
