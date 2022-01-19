@@ -37,6 +37,7 @@ namespace HMS.Controllers
             int  pageNumber = (json.pageNumber != null) ? json.pageNumber : 1;
             int rowsPerPage = (json.rowsPerPage != null) ? json.rowsPerPage : 10;
             string sortBy = (json.sortBy != null) ? json.sortBy : "device_id";
+           // sortBy = (json.sortBy != "") ? json.sortBy : "device_id";
             bool sortDesc = (json.sortDesc != null) ? json.sortDesc : false;
 
             string searchFromJson = json.search;
@@ -62,7 +63,7 @@ namespace HMS.Controllers
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
                        .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
                        .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-                       .WhereRaw("device.device_model LIKE 'Cirrus%' ")
+                       .WhereRaw("device.device_model LIKE 'Stratus%' ")
                        .Where(q =>
                                    q.WhereLike("device.device_id", @searchLike)
                                     .OrWhereLike("device.device_model", @searchLike)
@@ -85,7 +86,7 @@ namespace HMS.Controllers
         { 
             SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")
                        //.SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.measure_setup_id, measure_setup.meter_id")
-                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
+                       .SelectRaw("DISTINCT ON(device.device_id,device.measure_setup.meter_id, device.device_version, device.gsm_signal_power, device.update_ts, device.device_model ) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
                        .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
                        .SelectRaw("null AS last_measure")
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
