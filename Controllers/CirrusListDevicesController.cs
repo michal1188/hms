@@ -2,15 +2,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using SqlKata;
 using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
-using System.Threading;
+
 
 namespace HMS.Controllers
 {
@@ -37,7 +35,6 @@ namespace HMS.Controllers
             int  pageNumber = (json.pageNumber != null) ? json.pageNumber : 1;
             int rowsPerPage = (json.rowsPerPage != null) ? json.rowsPerPage : 10;
             string sortBy = (json.sortBy != null) ? json.sortBy : "device_id";
-           // sortBy = (json.sortBy != "") ? json.sortBy : "device_id";
             bool sortDesc = (json.sortDesc != null) ? json.sortDesc : false;
 
             string searchFromJson = json.search;
@@ -46,15 +43,32 @@ namespace HMS.Controllers
 
             searchLike = searchLike.Replace(";", "");          
             int totalDevices = this.FetchNumberOfDevices(searchLike);
-            
+
+            DateTime dateTimeNow = DateTime.Now;
+            DateTime dateTimeSubstract30Minutes = dateTimeNow.AddMinutes(-30);
+            //string dateTimeNowWithFormatToQuery = dateTimeNow.ToString("yyyy-MM-dd hh:mm:ss");
+            string dateTimeSubstract30MinutesWithFormatToQuery = dateTimeSubstract30Minutes.ToString("dd.MM.yyyy hh:mm:ss");
+
             IEnumerable<Object> sortedDevices = this.FetchSortedDevicesList(searchLike, sortBy, sortDesc, rowsPerPage, offset);
-            IEnumerable<Object> sortedDevicesMaxMeter = SelectMaxMeter_ts(sortedDevices);
+            IEnumerable<Object> sortedDevicesMaxMeter = SelectMaxMeter_ts(sortedDevices, dateTimeSubstract30MinutesWithFormatToQuery);
 
            object returnedList = new { sortedDevicesMaxMeter = sortedDevicesMaxMeter, totalDevices = totalDevices };
 
             return Ok(returnedList);
         }
-        
+        private bool checkDeviceStatus(int status)
+        {
+            bool result;
+            if (status < 0)
+                result=false;
+            else if (status == 0)
+                result = true;
+            else
+                result = true;
+
+            return result;
+
+        }
         private int FetchNumberOfDevices(string searchLike)
         {
    
@@ -70,7 +84,6 @@ namespace HMS.Controllers
                                     .OrWhereLike("measure_setup.meter_id", @searchLike)
                                    // .OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
-                                    .OrWhereRaw(" CAST(device.gsm_state AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereLike("device.device_version", @searchLike)
                                // .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
@@ -86,9 +99,10 @@ namespace HMS.Controllers
         { 
             SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")
                        //.SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.measure_setup_id, measure_setup.meter_id")
-                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id,  device.gsm_signal_power, device.device_version, device.device_model, update_ts) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
+                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id,  device.gsm_signal_power, device.device_version, device.device_model, update_ts) device.device_id,  device.device_model, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
                        .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
                        .SelectRaw("null AS last_measure")
+                       .SelectRaw("false AS state")
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
                        .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
                        .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
@@ -98,8 +112,7 @@ namespace HMS.Controllers
                                     .OrWhereLike("device.device_model", @searchLike)
                                     .OrWhereLike("measure_setup.meter_id", @searchLike)
                                     //.OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
-                                    .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
-                                    .OrWhereRaw(" CAST(device.gsm_state AS TEXT) LIKE ?", @searchLike)
+                                    .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)                      
                                     .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
                                     .OrWhereLike("device.device_version", @searchLike)
                                // .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
@@ -123,7 +136,7 @@ namespace HMS.Controllers
             return sortedDevices;
         }
 
-        private IEnumerable<Object> SelectMaxMeter_ts(IEnumerable<Object> sortedDevices)
+        private IEnumerable<Object> SelectMaxMeter_ts(IEnumerable<Object> sortedDevices, string dataTimeMinus30)
         {
             SqlKata.Query selectedMaxMeter_ts;
 
@@ -145,10 +158,21 @@ namespace HMS.Controllers
                          {
                              row["last_measure"] = "Brak odczytu";
                              continue;
+                        
                          }
                          row["last_measure"] = max["timezone"];
+                        Console.WriteLine(row["last_measure"].GetType());
+                        if (row["last_measure"] != "Brak odczytu") {
 
-                     }
+                        DateTime dataMeasureMinus30 = DateTime.ParseExact(dataTimeMinus30, "dd.MM.yyyy hh:mm:ss",
+                                       System.Globalization.CultureInfo.InvariantCulture);
+                        DateTime lastMeasure = DateTime.ParseExact(row["last_measure"].ToString(), "dd.MM.yyyy hh:mm:ss",
+                                       System.Globalization.CultureInfo.InvariantCulture);
+
+                        int result = DateTime.Compare(lastMeasure,dataMeasureMinus30);
+                        row["state"]=checkDeviceStatus(result);
+                    }
+                }
                     catch (Exception e)
                 {
                     log.Error(e);
