@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text.Json;
 
 namespace HMS.Controllers
@@ -31,9 +32,13 @@ namespace HMS.Controllers
 
             string deviceId = json.deviceID ;
 
-            IEnumerable<Object> listDetailsCirrus = GetDetailsCirrus(deviceId);
+            DateTime dateTimeNow = DateTime.Now;
+            DateTime dateTimeSubstract30Minutes = dateTimeNow.AddMinutes(-30);
+            string dateTimeSubstract30MinutesWithFormatToQuery = dateTimeSubstract30Minutes.ToString("dd.MM.yyyy hh:mm:ss");
 
-            object returnedDetails = new { message = listDetailsCirrus };
+            IEnumerable<Object> listDetailsCirrus = GetDetailsCirrus(deviceId);
+            IEnumerable<Object> listDetailsCirrusWithStatus= UpdateCirrusStatus(listDetailsCirrus, dateTimeSubstract30MinutesWithFormatToQuery);
+            object returnedDetails = new { message = listDetailsCirrusWithStatus };
 
             return Ok(returnedDetails);
         }
@@ -42,7 +47,8 @@ namespace HMS.Controllers
         {
             SqlKata.Query detailsCirrusQuery = this.queryFactory.Query("iot.device")
                        .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_signal_power")
-                       .Select("device.device_version", "device.gsm_state")
+                       .Select("device.device_version")
+                       .SelectRaw("false AS state")
                        .SelectRaw("device.update_ts   at time zone 'Europe/Warsaw'AS update_ts")
                        .SelectRaw("measurement_electricity.meter_ts   at time zone 'Europe/Warsaw'AS meter_ts")
                        .Select("measurement_electricity.pa", "measurement_electricity.ma", "measurement_electricity.pri", "measurement_electricity.mrc")
@@ -66,6 +72,45 @@ namespace HMS.Controllers
             }
             return detailsCirrus;
         }
+        private bool checkDeviceStatus(int status)
+        {
+            bool result;
+            if (status < 0)
+                result = false;
+            else if (status == 0)
+                result = true;
+            else
+                result = true;
 
-    }
+            return result;
+
+        }
+        private IEnumerable<Object> UpdateCirrusStatus(IEnumerable<Object> listDetailsCirrus, string dataTimeMinus30)
+        {
+            foreach (IDictionary<string, object> row in listDetailsCirrus)
+            {
+              try
+                {
+                    if (row["update_ts"] != null)
+                    {
+
+                        DateTime dataMeasureMinus30 = DateTime.ParseExact(dataTimeMinus30, "dd.MM.yyyy hh:mm:ss",
+                                      System.Globalization.CultureInfo.InvariantCulture);
+                    int result = DateTime.Compare((DateTime)row["update_ts"], dataMeasureMinus30);
+                    Console.WriteLine(result);
+                    row["state"] = checkDeviceStatus(result);
+                    }
+                }
+              catch (Exception e)
+                {
+                    log.Error(e);
+                  //      Console.WriteLine(e);
+                }
+            }
+            return listDetailsCirrus;
+        }
+
+
+
+        }
 }
