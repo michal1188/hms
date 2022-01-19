@@ -86,7 +86,7 @@ namespace HMS.Controllers
         { 
             SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")
                        //.SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.measure_setup_id, measure_setup.meter_id")
-                       .SelectRaw("DISTINCT ON(device.device_id,device.measure_setup.meter_id, device.device_version, device.gsm_signal_power, device.update_ts, device.device_model ) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
+                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id,  device.gsm_signal_power, device.device_version, device.device_model, update_ts) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
                        .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
                        .SelectRaw("null AS last_measure")
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
