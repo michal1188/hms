@@ -51,6 +51,7 @@ namespace HMS.Controllers
         {
             SqlKata.Query queryCount = this.db.Query("common.client")
                 .SelectRaw("coalesce(name,'Brak danych') AS name")
+                .SelectRaw("coalesce(client_id, null) AS client_id")
                 .SelectRaw("coalesce(" + @"info#>>'\{company,address\}', 'Brak danych') AS address")
                 .SelectRaw("coalesce(" + @"info#>>'\{company,city\}', 'Brak danych') AS city")
                // .SelectRaw("coalesce(" + @"info#>>'\{company,nip\}', 'Brak danych') AS nip")
@@ -64,6 +65,7 @@ namespace HMS.Controllers
                 .OrWhereRaw("lower("+@"info#>>'\{contact,email\}') like '" + @searchLike + "'")
                 .OrWhereRaw("lower("+ @"info#>>'\{contact,phone\}') like '" + @searchLike+"'")
                 .OrWhereRaw("lower(" + @"info#>>'\{contact,contact_name\}') like '" + @searchLike + "'")
+                .OrWhereRaw("CAST(client_id AS varchar) like '" + @searchLike+"'")
                 .OrWhereLike("name", @searchLike )
                     .AsCount();
 
@@ -77,6 +79,7 @@ namespace HMS.Controllers
         {
             SqlKata.Query sortedClientsQuery = this.db.Query("common.client")
                 .SelectRaw("coalesce(name,'Brak danych') AS name")
+                .SelectRaw("coalesce(client_id, null) AS client_id")
                 .SelectRaw("coalesce("+@"info#>>'\{company,address\}', 'Brak danych') AS address")
                 .SelectRaw("coalesce(" + @"info#>>'\{company,city\}', 'Brak danych') AS city")
                 //.SelectRaw("coalesce(" + @"info#>>'\{company,nip\}', 'Brak danych') AS nip")
@@ -91,6 +94,7 @@ namespace HMS.Controllers
                 .OrWhereRaw("lower(" + @"info#>>'\{contact,phone\}') like '" + @searchLike + "'")
                 .OrWhereRaw("lower(" + @"info#>>'\{contact,contact_name\}') like '" + @searchLike + "'")
                 .OrWhereLike("name", @searchLike)
+                 .OrWhereRaw("CAST(client_id AS varchar)  like '"+ @searchLike + "'")
                 .Limit(rowsPerPage)
                 .Offset(offset); 
 
