@@ -77,7 +77,7 @@ namespace HMS.Controllers
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
                        .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
                        .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-                       .WhereRaw("device.device_model LIKE 'Stratus%' ")
+                       .WhereRaw("device.device_model Like 'Stratus%' or device.device_model Like 'Cirrus%' ")
                        .Where(q =>
                                    q.WhereLike("device.device_id", @searchLike)
                                     .OrWhereLike("device.device_model", @searchLike)
@@ -106,7 +106,7 @@ namespace HMS.Controllers
                        .Join("iot.device_port", "device.device_id", "device_port.device_id")
                        .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
                        .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-                       .WhereRaw("device.device_model LIKE 'Stratus%' ")
+                       .WhereRaw("device.device_model Like 'Stratus%' or device.device_model Like 'Cirrus%' ")
                        .Where(q =>
                                    q.WhereLike("device.device_id", @searchLike)
                                     .OrWhereLike("device.device_model", @searchLike)
@@ -161,7 +161,7 @@ namespace HMS.Controllers
                         
                          }
                          row["last_measure"] = max["timezone"];
-                        Console.WriteLine(row["last_measure"].GetType());
+                        //Console.WriteLine(row["last_measure"].GetType());
                         if (row["last_measure"] != "Brak odczytu") {
 
                         DateTime dataMeasureMinus30 = DateTime.ParseExact(dataTimeMinus30, "dd.MM.yyyy hh:mm:ss",

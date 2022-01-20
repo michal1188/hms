@@ -47,20 +47,16 @@ namespace HMS.Controllers
         {
             SqlKata.Query detailsCirrusQuery = this.queryFactory.Query("iot.device")
                        .Select("device.device_id", "measure_setup.meter_id", "device.device_model", "device.gsm_signal_power")
-                       .Select("device.device_version")
-                       .SelectRaw("false AS state")
+                       .Select("device.device_version", "device.sim_card_id", "measure_setup.measure_setup_id")
                        .SelectRaw("device.update_ts   at time zone 'Europe/Warsaw'AS update_ts")
-                       .SelectRaw("measurement_electricity.meter_ts   at time zone 'Europe/Warsaw'AS meter_ts")
-                       .Select("measurement_electricity.pa", "measurement_electricity.ma", "measurement_electricity.pri", "measurement_electricity.mrc")
-                       .Select("measurement_electricity.l1", "measurement_electricity.l2", "measurement_electricity.l3", "measure_setup.measure_setup_id", "device.sim_card_id")
-                       .Join("iot.device_port", "device.device_id", "device_port.device_id")
-                       .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
-                       .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-                       .Join("iot.measurement_electricity", "measure_setup.meter_id", "measurement_electricity.meter_nr")
+                       .SelectRaw("false AS state, null as meter_ts, null as pa, null as ma, null as pri, null as mrc, null as l1, null as l2, null as l3")
+                       .LeftJoin("iot.device_port", "device.device_id", "device_port.device_id")
+                       .LeftJoin("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
+                       .LeftJoin("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
                        .Where("iot.device.device_id", "=", deviceId)
-                       .OrderByDesc("measurement_electricity.meter_ts")
+                       .OrderByRaw("device.update_ts  DESC NULLS LAST")
                        .Limit(1);
-
+            Console.WriteLine(queryFactory.Compiler.Compile(detailsCirrusQuery).Sql);
             IEnumerable<Object> detailsCirrus = new List<object>();
             try
             {
@@ -74,6 +70,7 @@ namespace HMS.Controllers
         }
         private bool checkDeviceStatus(int status)
         {
+            Console.WriteLine("checkDeviceStatus");
             bool result;
             if (status < 0)
                 result = false;
@@ -87,24 +84,55 @@ namespace HMS.Controllers
         }
         private IEnumerable<Object> UpdateCirrusStatus(IEnumerable<Object> listDetailsCirrus, string dataTimeMinus30)
         {
+            Console.WriteLine("UpdateCirrusStatus");
+            SqlKata.Query selectedMaxMeter_ts = null ;
+
             foreach (IDictionary<string, object> row in listDetailsCirrus)
             {
-              try
-                {
-                    if (row["update_ts"] != null)
-                    {
+                selectedMaxMeter_ts = this.queryFactory.Query("iot.measurement_electricity")
+                .SelectRaw("meter_ts  at time zone 'Europe/Warsaw',pa,ma,pri,mrc,l1,l2,l3")
+                .WhereRaw("meter_nr= '" + row["meter_id"] + "'")
+                .OrderByDesc("meter_ts")
+                .Limit(1);
+                IDictionary<string, object> max = selectedMaxMeter_ts.FirstOrDefault();
 
+                try
+                {
+                    if (max is null)
+                    {
+                        row["meter_ts"] = "Brak odczytu";
+                        row["pa"] = "Brak odczytu";
+                        row["ma"] = "Brak odczytu";
+                        row["pri"] = "Brak odczytu";
+                        row["mrc"] = "Brak odczytu";
+                        row["l1"] = "Brak odczytu";
+                        row["l2"] = "Brak odczytu";
+                        row["l3"] = "Brak odczytu";
+                        continue;
+                    }
+                    row["meter_ts"] = max["timezone"];
+               
+                    if (row["meter_ts"] != "Brak odczytu")
+                    {
                         DateTime dataMeasureMinus30 = DateTime.ParseExact(dataTimeMinus30, "dd.MM.yyyy hh:mm:ss",
-                                      System.Globalization.CultureInfo.InvariantCulture);
-                    int result = DateTime.Compare((DateTime)row["update_ts"], dataMeasureMinus30);
-                    Console.WriteLine(result);
-                    row["state"] = checkDeviceStatus(result);
+                                                           System.Globalization.CultureInfo.InvariantCulture);
+                        int result = DateTime.Compare((DateTime)row["meter_ts"], dataMeasureMinus30);
+                        Console.WriteLine(result);
+                        row["state"] = checkDeviceStatus(result);
+                        row["pa"] = max["pa"];
+                        row["ma"] = max["ma"];
+                        row["pri"] = max["pri"];
+                        row["mrc"] = max["mrc"];
+                        row["l1"] = max["l1"];
+                        row["l2"] = max["l2"];
+                        row["l3"] = max["l3"];
                     }
                 }
               catch (Exception e)
                 {
                     log.Error(e);
-                  //      Console.WriteLine(e);
+                  //        Console.WriteLine(e);
+                  
                 }
             }
             return listDetailsCirrus;
