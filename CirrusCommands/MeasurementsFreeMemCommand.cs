@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace HMS.CirrusCommands
 {
-     class EventLogFreeMemCommand : CirrusCommand
+    class MeasurementsFreeMemCommand : CirrusCommand
     {
 
-        public EventLogFreeMemCommand(string deviceId, int responseTimeoutInSeconds) : base(deviceId, responseTimeoutInSeconds)
+        public MeasurementsFreeMemCommand(string deviceId, int responseTimeoutInSeconds) : base(deviceId, responseTimeoutInSeconds)
         {
-            _payloadCirrus.command = "free_space event_log";
+            _payloadCirrus.command = "free_space measurements";
             _contentCirrusRequest.methodName = _methodName;
             _contentCirrusRequest.responseTimeoutInSeconds = responseTimeoutInSeconds;
             _contentCirrusRequest.payload = _payloadCirrus;
@@ -19,7 +19,7 @@ namespace HMS.CirrusCommands
         public override void setCommandResult(Task<string> HttpClientRequest)
         {
             IList<JToken> resultMessage = JObject.Parse(HttpClientRequest.Result);
-           // Console.WriteLine(HttpClientRequest.Result.ToString());
+            // Console.WriteLine(HttpClientRequest.Result.ToString());
             if (((JProperty)resultMessage[0]).Name == "Message")
             {
                 // Console.WriteLine(HttpClientRequest.Result.ToString());
@@ -62,6 +62,7 @@ namespace HMS.CirrusCommands
 
 
         }
+
 
     }
 }
