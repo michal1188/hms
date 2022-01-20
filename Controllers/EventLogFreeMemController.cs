@@ -10,12 +10,12 @@ namespace HMS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class InstrumentTransformerController : ControllerBase
+    public class EventLogFreeMemController : ControllerBase
     {
 
         private readonly ILog log = LogManager.GetLogger("mylog");
         [HttpPost]
-        public IActionResult InstrumentTransformer(JsonElement parameters)
+        public IActionResult EventLogFreeMem(JsonElement parameters)
         {
             dynamic json = JsonConvert.DeserializeObject(parameters.ToString());
 
@@ -23,11 +23,11 @@ namespace HMS.Controllers
 
             string deviceID = json.deviceID;
 
-            CirrusCommand instrumentTransformertCommand = new InstrumentTransformerCommand(deviceID, 200);
+            CirrusCommand eventLogFreeMemCommand = new EventLogFreeMemCommand(deviceID, 200);
             try
             {
-                instrumentTransformertCommand.setCommandResult(instrumentTransformertCommand.sendCommand());
-                object CommandResult = instrumentTransformertCommand.getCirrusResponse();
+                eventLogFreeMemCommand.setCommandResult(eventLogFreeMemCommand.sendCommand());
+                object CommandResult = eventLogFreeMemCommand.getCirrusResponse();
                 return Ok(CommandResult);
 
             }
@@ -42,8 +42,5 @@ namespace HMS.Controllers
             }
 
         }
-
-
-
     }
 }

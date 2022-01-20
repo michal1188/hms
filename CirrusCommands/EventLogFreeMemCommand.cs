@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 
 namespace HMS.CirrusCommands
 {
-    class InstrumentTransformerCommand : CirrusCommand
+     class EventLogFreeMemCommand : CirrusCommand
     {
-        public InstrumentTransformerCommand(string deviceId, int responseTimeoutInSeconds) : base(deviceId, responseTimeoutInSeconds)
+
+        public EventLogFreeMemCommand(string deviceId, int responseTimeoutInSeconds) : base(deviceId, responseTimeoutInSeconds)
         {
-            _payloadCirrus.command = "get instrument transformer";
+            _payloadCirrus.command = "free_space event_log";
             _contentCirrusRequest.methodName = _methodName;
             _contentCirrusRequest.responseTimeoutInSeconds = responseTimeoutInSeconds;
             _contentCirrusRequest.payload = _payloadCirrus;
@@ -35,17 +36,19 @@ namespace HMS.CirrusCommands
             }
             else if (((JProperty)resultMessage[0]).Name == "status")
             {
-                 Console.WriteLine(HttpClientRequest.Result.ToString());
+                Console.WriteLine(HttpClientRequest.Result.ToString());
                 string messageContent = resultMessage[1].First.ToString();
                 JObject jsonMessageContent = JObject.Parse(messageContent);
-               
+
                 IList<JToken> tempVariableForDictionaryKey = JObject.Parse(jsonMessageContent.ToString());
                 string dictionaryKey = ((JProperty)tempVariableForDictionaryKey[0]).Name;
-                if (dictionaryKey == "status") {
-                    setCirrusResponse(getErrorMeassage("CumulusError"));
-                } else
+                if (dictionaryKey == "status")
                 {
-                    string dictionaryValue = jsonMessageContent["transformer type"].ToString();
+                    setCirrusResponse(getErrorMeassage("CumulusError"));
+                }
+                else
+                {
+                    string dictionaryValue = jsonMessageContent["free_space"].ToString();
                     updateSuccessDictionaryValue(dictionaryKey, dictionaryValue);
                     string response = dictionaryKey;
                     setCirrusResponse(getSuccessMeassage(response));

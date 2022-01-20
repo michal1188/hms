@@ -39,6 +39,7 @@ namespace HMS.CirrusCommands
             _tokenSAS = setTokenSasCommand();
             errorDictionary = new Dictionary<string, string>(){
                  {"0", "Nieznany kod błędu, skontatuj się z administratorem"},
+                 {"CumulusError", "Sprawdź model urządzenia, najprawdopodobniej próbujesz wysłać komendę do urządzenia innego niż Cirrus"},
                  {"404001", "Operacja nie powiodła się, ponieważ urządzenia nie można znaleźć w usłudze IoT Hub. Urządzenie nie jest zarejestrowane"},
                  {"404103", "Operacja nie powiodła się, ponieważ  urządzenie nie jest w trybie online lub nie zarejestrowało wywołania zwrotnego metody bezpośredniej."} };
             successDictionary = new Dictionary<string, string>()
@@ -47,7 +48,8 @@ namespace HMS.CirrusCommands
                 {"OK", "Operacja zakończona sukcesem" },
                 { "ERROR", "Błąd więcej informacji w dzienniku zdarzeń urządzenia "},
                 //natężenie w amperach/napięcie w wolta
-                { "transformer type","" }
+                { "transformer type","" },
+                { "free_space","" }
     };
             }
         public abstract  void setCommandResult(Task<string> HttpClientRequest);
