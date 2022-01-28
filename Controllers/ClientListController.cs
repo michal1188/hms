@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Npgsql;
+using SqlKata.Compilers;
 using SqlKata.Execution;
 using System;
 using System.Collections.Generic;
@@ -13,7 +15,13 @@ namespace HMS.Controllers
     [ApiController]
     public class ClientListController : ControllerBase
     {
-        private readonly QueryFactory db;
+         static string connectionToReplika = Security.GetSecondDatabaseCredentials();
+     
+        private readonly QueryFactory db = new QueryFactory
+        {
+            Connection = new NpgsqlConnection(connectionToReplika.Trim()),
+            Compiler = new PostgresCompiler()
+        };
 
         private readonly ILog log = LogManager.GetLogger("mylog");
 

@@ -1,24 +1,19 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Npgsql;
 using SqlKata.Compilers;
 using SqlKata.Execution;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace HMS
 {
     public class Startup
     {
-        string connectionString = Security.GetDatabaseCredentials(); 
+        string connectionString = Security.GetDatabaseCredentials();
+       
         public Startup(IConfiguration configuration)
         {
 
@@ -40,7 +35,6 @@ namespace HMS
                 };
 
             });
- 
             services.AddControllers();
              
         }
