@@ -43,7 +43,7 @@ namespace HMS.Controllers
 
             searchLike = searchLike.Replace(";", "");
             searchLike = searchLike.ToLower();
-            int totalDevices = this.FetchNumberOfDevices(searchLike);
+            
 
             DateTime dateTimeNow = DateTime.Now;
             DateTime dateTimeSubstract30Minutes = dateTimeNow.AddMinutes(-30);
@@ -52,8 +52,8 @@ namespace HMS.Controllers
 
             IEnumerable<Object> sortedDevices = this.FetchSortedDevicesList(searchLike, sortBy, sortDesc, rowsPerPage, offset);
             IEnumerable<Object> sortedDevicesMaxMeter = SelectMaxMeter_ts(sortedDevices, dateTimeSubstract30MinutesWithFormatToQuery);
-
-           object returnedList = new { sortedDevicesMaxMeter = sortedDevicesMaxMeter, totalDevices = totalDevices };
+            int totalDevices = sortedDevicesMaxMeter.Count();
+            object returnedList = new { sortedDevicesMaxMeter = sortedDevicesMaxMeter, totalDevices = totalDevices };
 
             return Ok(returnedList);
         }
@@ -70,38 +70,13 @@ namespace HMS.Controllers
             return result;
 
         }
-        private int FetchNumberOfDevices(string searchLike)
-        {
-
-            SqlKata.Query queryCount = this.queryFactory.Query("iot.device")
-                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) 1 as count")
-                       //.Select("device.device_model")
-                       .Join("iot.device_port", "device.device_id", "device_port.device_id")
-                       .Join("iot.measure_device_setup", "device_port.device_port_id", "measure_device_setup.device_port_id")
-                       .Join("iot.measure_setup", "measure_device_setup.measure_device_setup_id", "measure_setup.measure_device_setup_id")
-                       .WhereRaw("(device.device_model Like 'Stratus%' or device.device_model Like 'Cirrus%') ")
-                       .Where(q =>
-                                   q.WhereLike("device.device_id", @searchLike)
-                                    .OrWhereLike("device.device_model", @searchLike)
-                                    .OrWhereLike("measure_setup.meter_id", @searchLike)
-                                   // .OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
-                                    .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
-                                    .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
-                                    .OrWhereLike("device.device_version", @searchLike)
-                               // .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
-                               );
-
-            //Console.WriteLine(queryFactory.Compiler.Compile(queryCount).Sql);
-            IEnumerable<object> totalPpe = queryCount.Get();
-
-            return totalPpe.Count();
-        }
+      
 
         private IEnumerable<Object> FetchSortedDevicesList(string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
         { 
             SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")
                        //.SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id) device.device_id,  device.device_model, device.gsm_state, device.gsm_signal_power, device.device_version, measure_setup.measure_setup_id, measure_setup.meter_id")
-                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id,  device.gsm_signal_power, device.device_version, device.device_model, update_ts) device.device_id,  device.device_model, device.gsm_signal_power, device.device_version, measure_setup.meter_id")
+                       .SelectRaw("DISTINCT ON(device.device_id, measure_setup.meter_id,  device.gsm_signal_power, device.device_version, device.device_model, update_ts) device.device_id,  device.device_model, device.gsm_signal_power, device.device_version, measure_setup.meter_id, measure_setup.measure_setup_id")
                        .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
                        .SelectRaw("null AS last_measure")
                        .SelectRaw("false AS state")
@@ -139,14 +114,15 @@ namespace HMS.Controllers
         private IEnumerable<Object> SelectMaxMeter_ts(IEnumerable<Object> sortedDevices, string dataTimeMinus30)
         {
             SqlKata.Query selectedMaxMeter_ts;
-
-                 foreach (IDictionary<string, object> row in sortedDevices)
+            IList<Object> latestMeasureSetupId = new List<object>();
+            foreach (IDictionary<string, object> row in sortedDevices)
                  {
                      //W przypadku przypisywania wartosci po meter_id dla Stratus i Cumulusa gdy na danym liczniku jest podpięte kolejne urządzenie to dla starych urzadzeniu
                      //które były na nym liczniku zaczytywana jest data najnowszego pomiaru jaki został wykonany na urządzeniu które jest obecnie podłączone  
                      //Druga opcja łaczenie po measure_setup_id 
                      selectedMaxMeter_ts = this.queryFactory.Query("iot.measurement_electricity")
                      .SelectRaw("meter_ts  at time zone 'Europe/Warsaw'")
+                     .Select("measure_setup_id")
                      .WhereRaw("meter_nr= '" + row["meter_id"]+"'" )
                      .OrderByDesc("meter_ts")
                      .Limit(1);
@@ -175,6 +151,10 @@ namespace HMS.Controllers
                         int result = DateTime.Compare(lastMeasure,dataMeasureMinus30);
                         row["state"]=checkDeviceStatus(result);
                         row["last_measure"] = row["last_measure"].ToString().Replace("T", "");
+                        if (row["measure_setup_id"].ToString().Equals(max["measure_setup_id"].ToString()))
+                        {
+                            latestMeasureSetupId.Add(row);
+                        }
                     }
                 }
                     catch (Exception e)
