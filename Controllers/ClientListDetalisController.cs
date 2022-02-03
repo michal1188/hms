@@ -71,11 +71,11 @@ namespace HMS.Controllers
             string dateTimeSubstract30MinutesWithFormatToQuery = dateTimeSubstract30Minutes.ToString("dd.MM.yyyy hh:mm:ss");
             IEnumerable<Object> sortedDevicesMaxMeter = SelectMaxMeter_ts(clientMetersList, dateTimeSubstract30MinutesWithFormatToQuery);
 
-             IEnumerable<Object> sortedClientDevices = this.FetchSortedClientDevicesList(sortedDevicesMaxMeter, clientMetersString, searchLike, sortBy, sortDesc,  rowsPerPage,  offset);
-               int totalDevices = sortedClientDevices.Count();
-            //   IEnumerable<Object> listDevicesWithSingleMeter = GetLatestMeter_id(sortedDevicesMaxMeter);
+             IEnumerable<Object> sortedClientDevices = this.FetchSortedClientDevicesList(sortedDevicesMaxMeter, clientMetersString, searchLike, sortBy, sortDesc );
+             int totalDevices = sortedClientDevices.Count();
 
-            object returnedList = new { sortedClientDevices = sortedClientDevices, totalDevices = totalDevices };
+            IEnumerable<Object> clientDevices = sortedClientDevices.Skip(offset).Take(rowsPerPage).ToList();
+             object returnedList = new { sortedClientDevices = clientDevices, totalDevices = totalDevices };
             return Ok(returnedList);
         }
 
@@ -137,7 +137,7 @@ namespace HMS.Controllers
 
         }
 
-        private IEnumerable<Object> FetchSortedClientDevicesList(IEnumerable<Object> maxMeter_tsList, string clientMeters, string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
+        private IEnumerable<Object> FetchSortedClientDevicesList(IEnumerable<Object> maxMeter_tsList, string clientMeters, string searchLike, string sortBy, bool sortDesc )
         {
             SqlKata.Query sortedDevicesQuery = this.dbToGeneral.Query("iot.device")
                        .SelectRaw("device.device_id,  device.device_model, device.gsm_signal_power, device.device_version, measure_setup.meter_id, measure_setup.measure_setup_id")
@@ -195,8 +195,8 @@ namespace HMS.Controllers
                 log.Error(e);
             }
       
-            var clientDevices = clientDevicesList.Skip(offset).Take(rowsPerPage).ToList();
-            return clientDevices;
+            
+            return clientDevicesList;
         }
 
 

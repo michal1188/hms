@@ -53,7 +53,7 @@ namespace HMS.Controllers
             IEnumerable<Object> sortedDevices = this.FetchSortedDevicesList(searchLike, sortBy, sortDesc, rowsPerPage, offset);
             IEnumerable<Object> selectStringsOfValuesFromDataBase = SelectStringsOfValuesFromDataBase(sortedDevices);
             IEnumerable<Object> sortedDevicesMaxMeter = SelectMaxMeter_ts(selectStringsOfValuesFromDataBase, dateTimeSubstract30MinutesWithFormatToQuery);
-            int totalDevices = sortedDevices.Count();
+            int totalDevices = FetchNumberOfDevice(searchLike);
 
             object returnedList = new { sortedDevicesMaxMeter = sortedDevicesMaxMeter, totalDevices = totalDevices };
 
@@ -72,7 +72,35 @@ namespace HMS.Controllers
             return result;
 
         }
-      
+
+        private int FetchNumberOfDevice(string searchLike)
+        {
+            SqlKata.Query sortedDevicesQuery = this.queryFactory.Query("iot.device")
+                         .SelectRaw("device.device_id,  device.device_model, device.gsm_signal_power, device.device_version")
+                         .SelectRaw("device.update_ts at time zone 'Europe/Warsaw'AS update_ts ")
+                         .SelectRaw("null AS last_measure")
+                         .SelectRaw("null AS meter_id")
+                         .SelectRaw("false AS state")
+                         .SelectRaw("null AS meteridlist")
+                         .SelectRaw("null AS measuresetupidlist")
+                         .WhereRaw("((device.device_model Like 'Stratus%' or device.device_model Like 'Cirrus%') and  device.device_id not like 's%')")
+                         .Where(q =>
+                                     q.WhereLike("device.device_id", @searchLike)
+                                      .OrWhereLike("device.device_model", @searchLike)
+                                      //.OrWhereLike("measure_setup.meter_id", @searchLike)
+                                      //.OrWhereRaw(" CAST(measure_setup.measure_setup_id AS TEXT) LIKE ?", @searchLike)
+                                      .OrWhereRaw(" CAST(device.gsm_signal_power AS TEXT) LIKE ?", @searchLike)
+                                      .OrWhereRaw(" CAST(device.update_ts AS TEXT) LIKE ?", @searchLike)
+                                      .OrWhereLike("device.device_version", @searchLike)
+                                 // .OrWhereRaw(" CAST(sub.last_measure AS TEXT) LIKE ?", @searchLike)
+                                 )
+                      .AsCount();
+
+            
+            int totalClient = Convert.ToInt32(sortedDevicesQuery.First().count);
+
+            return totalClient;
+        }
 
         private IEnumerable<Object> FetchSortedDevicesList(string searchLike, string sortBy, bool sortDesc, int rowsPerPage, int offset)
         {
