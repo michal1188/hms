@@ -49,7 +49,9 @@ namespace HMS.CirrusCommands
                 { "ERROR", "Błąd więcej informacji w dzienniku zdarzeń urządzenia "},
                 //natężenie w amperach/napięcie w wolta
                 { "transformer type","" },
-                { "free_space","" }
+                { "free_space","" },
+                { "EMPTY","Brak pomiarów na urzadzeniu" },
+                { "LastMeasurements","" }
     };
             }
         public abstract  void setCommandResult(Task<string> HttpClientRequest);
@@ -57,7 +59,7 @@ namespace HMS.CirrusCommands
 
             try
             {
-                Console.WriteLine("jestem w sendCommand2");
+               
                 string contentRequest = JsonConvert.SerializeObject(_contentCirrusRequest, Formatting.Indented);
 
                 using (var httpClient = new HttpClient())
@@ -94,12 +96,19 @@ namespace HMS.CirrusCommands
 
         public void setCirrusResponse(string message)
         {
-            _cirrusResponse = new { message = message };
+            _cirrusResponse =  new { message = message };
+        }
+
+        public void setCirrusResponseLastMeasurment(string message)
+        {
+            _cirrusResponse = message;// new { message = message };
         }
         public object getCirrusResponse()
         {
             return _cirrusResponse;
         }
+
+
         private string setTokenSasCommand()
         {
             try
