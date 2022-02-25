@@ -1,0 +1,1 @@
+﻿Host=192.168.20.20;port=5557;Username=postgres;Password=P@ssw0rd;Database=test2;Pooling=true

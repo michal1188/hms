@@ -1,23 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\hobo\\HMS\\HMS.csproj": {}
+    "C:\\Praca\\HMS\\HMS.csproj": {}
   },
   "projects": {
-    "C:\\hobo\\HMS\\HMS.csproj": {
+    "C:\\Praca\\HMS\\HMS.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\hobo\\HMS\\HMS.csproj",
+        "projectUniqueName": "C:\\Praca\\HMS\\HMS.csproj",
         "projectName": "HMS",
-        "projectPath": "C:\\hobo\\HMS\\HMS.csproj",
-        "packagesPath": "C:\\Users\\mchmu\\.nuget\\packages\\",
-        "outputPath": "C:\\hobo\\HMS\\obj\\",
+        "projectPath": "C:\\Praca\\HMS\\HMS.csproj",
+        "packagesPath": "C:\\Users\\Michał Domański\\.nuget\\packages\\",
+        "outputPath": "C:\\Praca\\HMS\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\mchmu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Michał Domański\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -43,9 +44,37 @@
         "netcoreapp3.1": {
           "targetAlias": "netcoreapp3.1",
           "dependencies": {
+            "Grpc.Core": {
+              "target": "Package",
+              "version": "[2.42.0, )"
+            },
+            "Microsoft.AspNetCore.Mvc.NewtonsoftJson": {
+              "target": "Package",
+              "version": "[3.1.22, )"
+            },
             "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": {
               "target": "Package",
               "version": "[1.11.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "Npgsql": {
+              "target": "Package",
+              "version": "[6.0.0, )"
+            },
+            "SqlKata": {
+              "target": "Package",
+              "version": "[2.3.7, )"
+            },
+            "SqlKata.Execution": {
+              "target": "Package",
+              "version": "[2.3.7, )"
+            },
+            "log4net": {
+              "target": "Package",
+              "version": "[2.0.13, )"
             }
           },
           "imports": [
@@ -66,7 +95,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.100\\RuntimeIdentifierGraph.json"
         }
       }
     }

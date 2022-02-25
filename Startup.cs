@@ -1,22 +1,22 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Npgsql;
+using SqlKata.Compilers;
+using SqlKata.Execution;
+
 
 namespace HMS
 {
     public class Startup
     {
+        string connectionString = Security.GetDatabaseCredentials();
+       
         public Startup(IConfiguration configuration)
         {
+
             Configuration = configuration;
         }
 
@@ -25,7 +25,18 @@ namespace HMS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped(factory =>
+            {
+
+                return new QueryFactory
+                {
+                    Connection = new NpgsqlConnection(connectionString.Trim()),
+                    Compiler = new PostgresCompiler()
+                };
+
+            });
             services.AddControllers();
+             
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,6 +48,9 @@ namespace HMS
             }
 
             app.UseHttpsRedirection();
+            app.UseCors(builder => builder.WithOrigins("*")
+                .AllowAnyMethod()
+                .AllowAnyHeader());
 
             app.UseRouting();
 
